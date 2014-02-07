@@ -193,6 +193,70 @@ NSString* const SocketIOException = @"SocketIOException";
     }
 }
 
+-(void) connectToHost:(NSString*)host onPort:(NSInteger)port withParams:(NSDictionary*)params withToken:(NSString*)token {
+    [self connectToHost:host onPort:port withParams:params withToken:token withNamespace:@""];
+}
+
+-(void) connectToHost:(NSString*)host onPort:(NSInteger)port withParams:(NSDictionary*)params withToken:(NSString*)token withNamespace:(NSString*)endpoint {
+    [self connectToHost:host onPort:port withParams:params withToken:token withNamespace:endpoint withConnectionTimeout:defaultConnectionTimeout];
+}
+
+-(void) connectToHost:(NSString*)host
+            onPort:(NSInteger)port
+            withParams:(NSDictionary*)params
+            withToken:(NSString*)token
+            withNamespace:(NSString*)endpoint
+            withConnectionTimeout:(NSTimeInterval)connectionTimeout {
+    if (!_isConnected && !_isConnecting) {
+        _isConnecting = YES;
+        
+        _host = host;
+        _port = port;
+        _params = params;
+        _endpoint = [endpoint copy];
+        
+        // create a query parameters string
+        NSMutableString *query = [[NSMutableString alloc] initWithString:@""];
+        [params enumerateKeysAndObjectsUsingBlock: ^(id key, id value, BOOL *stop) {
+            [query appendFormat:@"&%@=%@", key, value];
+        }];
+        
+        // do handshake via HTTP request
+        NSString *protocol = _useSecure ? @"https" : @"http";
+        NSString *port = _port ? [NSString stringWithFormat:@":%d", _port] : @"";
+        NSTimeInterval time = [[NSDate date] timeIntervalSince1970] * 1000;
+        NSString *handshakeUrl = [NSString stringWithFormat:kHandshakeURL, protocol, _host, port, kResourceName, time, query];
+        
+        DEBUGLOG(@"Connecting to socket with URL: %@", handshakeUrl);
+        query = nil;
+        
+        // make a request
+        NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:[NSURL URLWithString:handshakeUrl]
+                                                               cachePolicy:NSURLRequestReloadIgnoringLocalAndRemoteCacheData
+                                                           timeoutInterval:connectionTimeout];
+        
+        if (token) {
+            [request setValue:[NSString stringWithFormat:@"Bearer %@", token] forHTTPHeaderField:@"Authorization"];
+        }
+        
+        [request setHTTPShouldHandleCookies:YES];
+        
+        _handshake = [[NSURLConnection alloc] initWithRequest:request delegate:self startImmediately:NO];
+        [_handshake scheduleInRunLoop:[NSRunLoop mainRunLoop] forMode:NSDefaultRunLoopMode];
+        [_handshake start];
+        
+        if (_handshake) {
+            _httpRequestData = [NSMutableData data];
+        }
+        else {
+            // connection failed
+            [self connection:_handshake didFailWithError:nil];
+        }
+    }
+
+    
+}
+
 - (void) disconnect
 {
     if (_isConnected) {
