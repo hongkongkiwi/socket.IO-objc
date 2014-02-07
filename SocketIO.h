@@ -111,6 +111,9 @@ typedef enum {
 - (void) connectToHost:(NSString *)host onPort:(NSInteger)port withParams:(NSDictionary *)params withCookieParams:(NSDictionary *)cookieParams withNamespace:(NSString *)endpoint;
 - (void) connectToHost:(NSString *)host onPort:(NSInteger)port withParams:(NSDictionary *)params withNamespace:(NSString *)endpoint withConnectionTimeout: (NSTimeInterval) connectionTimeout;
 - (void) connectToHost:(NSString *)host onPort:(NSInteger)port withParams:(NSDictionary *)params withCookieParams:(NSDictionary *)cookieParams withNamespace:(NSString *)endpoint withConnectionTimeout: (NSTimeInterval) connectionTimeout;
+-(void) connectToHost:(NSString*)host onPort:(NSInteger)port withParams:(NSDictionary*)params withToken:(NSString*)token;
+-(void) connectToHost:(NSString*)host onPort:(NSInteger)port withParams:(NSDictionary*)params withToken:(NSString*)token withNamespace:(NSString*)endpoint;
+-(void) connectToHost:(NSString*)host onPort:(NSInteger)port withParams:(NSDictionary*)params withToken:(NSString*)token withNamespace:(NSString*)endpoint withConnectionTimeout: (NSTimeInterval) connectionTimeout;
 
 
 - (void) disconnect;
